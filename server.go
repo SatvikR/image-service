@@ -75,7 +75,6 @@ func loadConfig() Config {
 //
 // Utility functions used in our routes
 //
-
 func genFileName() (string, error) {
 	buff := make([]byte, 32)
 	_, err := rand.Read(buff)
@@ -167,7 +166,6 @@ func DeleteObjectFromKey(key string) error {
 //
 // Routes
 //
-
 func RDelete(c *gin.Context) {
 	var reqBody DeleteReq
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
