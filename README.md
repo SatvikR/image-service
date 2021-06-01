@@ -8,7 +8,7 @@ Runs on `http://localhost:8000`
 
 ### Setup
 
-Create a `.env` file and add these three fields
+Create a `.env` file and add these four fields
 
 ```
 AWS_ACCESS_KEY=
