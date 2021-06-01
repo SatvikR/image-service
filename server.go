@@ -212,7 +212,7 @@ func RUpload(c *gin.Context) {
 	URL, err := UploadFromFileHeader(file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"error": "unable to upload file",
 		})
 		return
 	}
