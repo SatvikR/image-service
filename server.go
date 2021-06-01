@@ -75,7 +75,6 @@ func loadConfig() Config {
 //
 // Utility functions used in our routes
 //
-
 func genFileName() (string, error) {
 	buff := make([]byte, 32)
 	_, err := rand.Read(buff)
@@ -147,7 +146,13 @@ func UploadFromFileHeader(header *multipart.FileHeader) (string, error) {
 	return aws.StringValue(&result.Location), nil
 }
 
-func DeleteObjectFromKey(key string) error {
+func DeleteObjectFromURL(url string) error {
+	if !validateObjectURL(url) {
+		return errors.New("invalid url")
+	}
+
+	key := url[len(config.KeyPrefix):]
+
 	objects := []s3manager.BatchDeleteObject{
 		{
 			Object: &s3.DeleteObjectInput{
@@ -167,30 +172,20 @@ func DeleteObjectFromKey(key string) error {
 //
 // Routes
 //
-
 func RDelete(c *gin.Context) {
 	var reqBody DeleteReq
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error": err.Error(),
 		})
 		return
 	}
 
-	if !validateObjectURL(reqBody.URL) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid url",
-		})
-		return
-	}
-
-	key := reqBody.URL[len(config.KeyPrefix):]
-
-	err := DeleteObjectFromKey(key)
+	err := DeleteObjectFromURL(reqBody.URL)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "unable to delete object",
+			"error": err.Error(),
 		})
 		return
 	}
@@ -204,7 +199,7 @@ func RUpload(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "file not found",
+			"error": err.Error(),
 		})
 		return
 	}
@@ -212,7 +207,7 @@ func RUpload(c *gin.Context) {
 	URL, err := UploadFromFileHeader(file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "unable to upload file",
+			"error": err.Error(),
 		})
 		return
 	}
