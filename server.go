@@ -95,7 +95,7 @@ func UploadFromFileHeader(header *multipart.FileHeader) (string, error) {
 
 	var filePathBuff bytes.Buffer
 
-	filePathBuff.WriteString("goimages/")
+	filePathBuff.WriteString("images/")
 	filePathBuff.WriteString(filename)
 	filePathBuff.WriteString(ext)
 
