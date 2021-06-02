@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -220,6 +221,10 @@ func RUpload(c *gin.Context) {
 func main() {
 	r := gin.Default()
 	r.MaxMultipartMemory = 5 << 20
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	r.Use(cors.New(corsConfig))
 
 	r.POST("/upload", RUpload)
 	r.DELETE("/delete", RDelete)
