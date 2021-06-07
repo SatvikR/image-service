@@ -32,7 +32,6 @@ type Config struct {
 	SecretKey    string
 	S3bucketName string
 	Region       string
-	KeyPrefix    string
 }
 
 type DeleteReq struct {
@@ -51,25 +50,16 @@ var deleter *s3manager.BatchDelete
 var config Config
 
 func loadConfig() Config {
-	var KeyPrefix strings.Builder
-
 	AccessKey := os.Getenv("AWS_ACCESS_KEY")
 	SecretKey := os.Getenv("AWS_SECRET_KEY")
 	S3bucketName := os.Getenv("AWS_S3_BUCKET_NAME")
 	Region := os.Getenv("AWS_REGION")
-
-	KeyPrefix.WriteString("https://")
-	KeyPrefix.WriteString(S3bucketName)
-	KeyPrefix.WriteString(".s3.")
-	KeyPrefix.WriteString(Region)
-	KeyPrefix.WriteString(".amazonaws.com/")
 
 	return Config{
 		AccessKey,
 		SecretKey,
 		S3bucketName,
 		Region,
-		KeyPrefix.String(),
 	}
 }
 
@@ -95,10 +85,6 @@ func getFileType(r io.Reader) (string, error) {
 	ftype := http.DetectContentType(buff)
 
 	return ftype, nil
-}
-
-func validateObjectURL(URL string) bool {
-	return strings.HasPrefix(URL, config.KeyPrefix)
 }
 
 func UploadFromFileHeader(header *multipart.FileHeader) (string, error) {
@@ -147,12 +133,7 @@ func UploadFromFileHeader(header *multipart.FileHeader) (string, error) {
 	return aws.StringValue(&result.Location), nil
 }
 
-func DeleteObjectFromURL(url string) error {
-	if !validateObjectURL(url) {
-		return errors.New("invalid url")
-	}
-
-	key := url[len(config.KeyPrefix):]
+func DeleteObjectFromKey(key string) error {
 
 	objects := []s3manager.BatchDeleteObject{
 		{
@@ -174,15 +155,9 @@ func DeleteObjectFromURL(url string) error {
 // Routes
 //
 func RDelete(c *gin.Context) {
-	var reqBody DeleteReq
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
+	key := c.Param("key")
 
-	err := DeleteObjectFromURL(reqBody.URL)
+	err := DeleteObjectFromKey(key)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -192,7 +167,7 @@ func RDelete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("%s deleted successfully", reqBody.URL),
+		"message": fmt.Sprintf("%s deleted successfully", key),
 	})
 }
 
@@ -227,7 +202,7 @@ func main() {
 	r.Use(cors.New(corsConfig))
 
 	r.POST("/upload", RUpload)
-	r.DELETE("/delete", RDelete)
+	r.DELETE("/delete/:key", RDelete)
 
 	config = loadConfig()
 
