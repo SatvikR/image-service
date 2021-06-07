@@ -138,7 +138,7 @@ func DeleteObjectFromKey(key string) error {
 	objects := []s3manager.BatchDeleteObject{
 		{
 			Object: &s3.DeleteObjectInput{
-				Key:    aws.String(key),
+				Key:    aws.String("images/" + key),
 				Bucket: aws.String(config.S3bucketName),
 			},
 		},
